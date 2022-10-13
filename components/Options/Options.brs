@@ -83,6 +83,7 @@ sub onKeyEvent(key, press) as Boolean
                 end if
             else if m.currentOption + 1 <= 1 
                 m.optionSelectRect.translation = [90,300]
+                m.optionSelectRect.width = m.top.findNode("chatOption").getChild(0).localBoundingRect().width + 30
                 m.currentOption += 1
             end if
             handled = true
@@ -94,6 +95,7 @@ sub onKeyEvent(key, press) as Boolean
                 end if
             else if m.currentOption - 1 >= 0
                 m.optionSelectRect.translation = [90,200] 
+                m.optionSelectRect.width = m.top.findNode("videoQualityOption").getChild(0).localBoundingRect().width + 30
                 m.currentOption -= 1
             end if
             handled = true
@@ -101,3 +103,6 @@ sub onKeyEvent(key, press) as Boolean
     end if
     return handled
 end sub
+
+'tofix: chatinfo could be updated with an interface and an event'
+'tofix: rectangle size should be '

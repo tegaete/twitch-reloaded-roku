@@ -3,10 +3,8 @@
 <component name="Options" extends="Group">
 
     <interface>
-
+         
     </interface>
-<!--
-    <script type="text/brightscript" uri="pkg:/components/Options/Options.brs" />-->
     <script type="text/brightscript" uri="Options.brs" />
     <children>
         
@@ -20,7 +18,7 @@
             id="optionSelectRect"
             visible="true"
             color="0x26262CFF"
-            width="400"
+            width="288"
             height="75"
             translation="[90,200]" />
 
