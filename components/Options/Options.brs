@@ -1,7 +1,7 @@
 sub init()
+     m.optionsList = m.top.findNode("optionsList")
     m.currentOptionsList = m.top.findNode("currentOptionsList")
     m.videoQualityMenu = m.top.findNode("videoQualityMenu")
-    m.optionsList = m.top.findNode("optionsList")
     m.displayedQuality = m.top.findNode("displayedQuality")
     m.displayedChatOption = m.top.findNode("displayedChatOption")
     
@@ -9,13 +9,15 @@ sub init()
     
     initVideoQualityMenu()
     m.videoQualityMenu.checkedItem = m.global.videoQuality
+    m.videoQualityMenu.jumpToItem = m.videoQualityMenu.checkedItem
     setDisplayedQuality()
     
     m.currentChatOption = m.global.chatOption
     setDisplayedChatOption()
     
-    m.videoQualityMenu.ObserveField("itemSelected","onVideoQualityChange")
+    m.videoQualityMenu.ObserveField("itemSelected","onVideoQualitySelect")
     m.optionsList.ObserveField("itemFocused","onOptionFocusChange")
+    m.optionsList.ObserveField("itemSelected","onOptionSelect")
     m.top.ObserveField("visible","onVisibilityChange")
 end sub
 
@@ -27,7 +29,7 @@ sub onVisibilityChange()
      focusOptionsList()
 end sub
 
-sub onVideoQualityChange()
+sub onVideoQualitySelect()
      if m.global.videoQuality <> invalid
           m.global.setField("videoQuality", m.videoQualityMenu.checkedItem)
           if m.videoQualityMenu.checkedItem = 0 or m.videoQualityMenu.checkedItem = 2
@@ -39,6 +41,20 @@ sub onVideoQualityChange()
           setDisplayedQuality()
           focusOptionsList()
      end if
+end sub
+
+sub onOptionSelect()
+     selected = m.optionsList.itemSelected
+     if selected = 0
+         m.videoQualityMenu.setFocus(true)
+         m.currentOptionsList.visible = false
+         m.videoQualityMenu.visible = true
+    else if selected  = 1
+         m.currentChatOption = not m.currentChatOption
+         m.global.setField("chatOption", m.currentChatOption)
+         setDisplayedChatOption()
+         saveVideoSettings()
+    end if
 end sub
 
 sub focusOptionsList()
@@ -88,20 +104,6 @@ end sub
 sub onKeyEvent(key, press) as Boolean
     handled = false
     if press
-        if key = "OK"
-            if m.optionsList.itemFocused = 0
-                m.videoQualityMenu.setFocus(true)
-                m.currentOptionsList.visible = false
-                m.videoQualityMenu.visible = true
-            else if m.optionsList.itemFocused  = 1
-                m.currentChatOption = not m.currentChatOption
-                m.global.setField("chatOption", m.currentChatOption)
-                setDisplayedChatOption()
-                saveVideoSettings()
-            end if
-            handled = true
-        end if
-        
         'currently not working'
         if key = "BACK"
           if m.videoQualityMenu.visible
