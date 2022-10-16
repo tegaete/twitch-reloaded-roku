@@ -1,31 +1,81 @@
 sub init()
-    m.currentVideoQuality = m.top.findNode("currentVideoQuality")
-    m.videoQualityDropdown = m.top.findNode("videoQualityDropdown")
-    m.videoQualitySelectRect = m.top.findNode("videoQualitySelectRect")
-    m.chatInfo = m.top.findNode("chatInfo")
-    m.optionSelectRect = m.top.findNode("optionSelectRect")
-
-    m.top.observeField("visible", "onBackPress")
-
+    m.currentOptionsList = m.top.findNode("currentOptionsList")
+    m.videoQualityMenu = m.top.findNode("videoQualityMenu")
+    m.optionsList = m.top.findNode("optionsList")
+    m.displayedQuality = m.top.findNode("displayedQuality")
+    m.displayedChatOption = m.top.findNode("displayedChatOption")
+    
     m.videoQualities = ["1080p60","1080p","720p60","720p","480p","360p","160p"]
-    '? "m.videoQuality > "; m.global.videoQuality
-    m.currentVideoQuality.text = m.videoQualities[m.global.videoQuality]
+    
+    initVideoQualityMenu()
+    m.videoQualityMenu.checkedItem = m.global.videoQuality
+    setDisplayedQuality()
+    
     m.currentChatOption = m.global.chatOption
-    if m.currentChatOption
-        m.chatInfo.text = "Enabled"
-    else
-        m.chatInfo.text = "Disabled"
-    end if
-    m.currentOption = 0
-    m.currentVideoQualitySelected = 0
+    setDisplayedChatOption()
+    
+    m.videoQualityMenu.ObserveField("itemSelected","onVideoQualityChange")
+    m.optionsList.ObserveField("itemFocused","onOptionFocusChange")
+    m.top.ObserveField("visible","onVisibilityChange")
 end sub
 
-sub onBackPress()
-    if m.top.visible = false
-        m.videoQualityDropdown.visible = false
-        m.currentVideoQuality.visible = true
-    end if
+sub onOptionFocusChange()
+     m.currentOptionsList.jumpToItem = m.optionsList.itemFocused
 end sub
+
+sub onVisibilityChange()
+     focusOptionsList()
+end sub
+
+sub onVideoQualityChange()
+     if m.global.videoQuality <> invalid
+          m.global.setField("videoQuality", m.videoQualityMenu.checkedItem)
+          if m.videoQualityMenu.checkedItem = 0 or m.videoQualityMenu.checkedItem = 2
+              m.global.setField("videoFramerate", 60)
+          else
+              m.global.setField("videoFramerate", 30)
+          end if
+          saveVideoSettings()
+          setDisplayedQuality()
+          focusOptionsList()
+     end if
+end sub
+
+sub focusOptionsList()
+     m.optionsList.setFocus(true)
+     m.currentOptionsList.visible = true
+     m.videoQualityMenu.visible = false
+end sub
+
+
+sub initVideoQualityMenu()
+     qualitiesAsContentNodes = []
+    for each vq in m.videoQualities
+          node = createObject("RoSGNode","ContentNode")
+          node.title = vq
+          qualitiesAsContentNodes.Push(node)
+    end for
+    m.videoQualityMenu.content.appendChildren(qualitiesAsContentNodes)
+end sub
+
+sub setDisplayedQuality()
+     m.displayedQuality.update({"title": m.videoQualities[m.global.videoQuality]})
+end sub
+
+sub setDisplayedChatOption()
+     displayOption = "Disabled"
+    if m.currentChatOption
+        displayOption = "Enabled"
+   end if
+    m.displayedChatOption.update({"title": displayOption})
+end sub
+
+'sub onBackPress()
+ ''   if m.top.visible = false
+        'm.videoQualityDropdown.visible = false
+''        m.currentVideoQuality.visible = true
+ ''   end if
+'end sub
 
 sub saveVideoSettings() as Void
     sec = createObject("roRegistrySection", "VideoSettings")
@@ -38,71 +88,28 @@ end sub
 sub onKeyEvent(key, press) as Boolean
     handled = false
     if press
-        '? "options test > ";m.currentOption; " ";m.currentVideoQualitySelected; " ";m.videoQualityDropdown.hasFocus()
         if key = "OK"
-            '? "options test > ";m.videoQualityDropdown.hasFocus()
-            if m.videoQualityDropdown.hasFocus()
-                if m.global.videoQuality <> invalid
-                    m.global.setField("videoQuality", m.currentVideoQualitySelected)
-                    if m.currentVideoQualitySelected = 0 or m.currentVideoQualitySelected = 2
-                        m.global.setField("videoFramerate", 60)
-                    else
-                        m.global.setField("videoFramerate", 30)
-                    end if
-                end if
-                saveVideoSettings()
-                m.currentVideoQuality.text = m.videoQualities[m.currentVideoQualitySelected]
-                m.videoQualityDropdown.setFocus(false)
-                m.top.setFocus(true)
-                m.videoQualitySelectRect.visible = false
-                m.videoQualityDropdown.visible = false
-                m.currentVideoQuality.visible = true
-            else if m.currentOption = 0
-                '? "here?"
-                m.videoQualityDropdown.setFocus(true)
-                m.currentVideoQuality.visible = false
-                m.videoQualityDropdown.visible = true
-                m.videoQualitySelectRect.visible = true
-            else if m.currentOption = 1
-                '? "here?"
+            if m.optionsList.itemFocused = 0
+                m.videoQualityMenu.setFocus(true)
+                m.currentOptionsList.visible = false
+                m.videoQualityMenu.visible = true
+            else if m.optionsList.itemFocused  = 1
                 m.currentChatOption = not m.currentChatOption
                 m.global.setField("chatOption", m.currentChatOption)
-                if m.currentChatOption
-                    m.chatInfo.text = "Enabled"
-                else
-                    m.chatInfo.text = "Disabled"
-                end if
+                setDisplayedChatOption()
                 saveVideoSettings()
             end if
             handled = true
-        else if key = "down"
-            if m.videoQualityDropdown.hasFocus()
-                if m.currentVideoQualitySelected + 1 <= 6 
-                    m.currentVideoQualitySelected += 1
-                    m.videoQualitySelectRect.translation = [m.videoQualitySelectRect.translation[0], m.videoQualitySelectRect.translation[1] + 50]
-                end if
-            else if m.currentOption + 1 <= 1 
-                m.optionSelectRect.translation = [90,300]
-                m.optionSelectRect.width = m.top.findNode("chatOption").getChild(0).localBoundingRect().width + 30
-                m.currentOption += 1
-            end if
-            handled = true
-        else if key = "up"
-            if m.videoQualityDropdown.hasFocus()
-                if m.currentVideoQualitySelected - 1 >= 0 
-                    m.currentVideoQualitySelected -= 1
-                    m.videoQualitySelectRect.translation = [m.videoQualitySelectRect.translation[0], m.videoQualitySelectRect.translation[1] - 50]
-                end if
-            else if m.currentOption - 1 >= 0
-                m.optionSelectRect.translation = [90,200] 
-                m.optionSelectRect.width = m.top.findNode("videoQualityOption").getChild(0).localBoundingRect().width + 30
-                m.currentOption -= 1
-            end if
-            handled = true
+        end if
+        
+        'currently not working'
+        if key = "BACK"
+          if m.videoQualityMenu.visible
+               focusOptionsList()
+               handled = true
+          end if
+        
         end if
     end if
     return handled
 end sub
-
-'tofix: chatinfo could be updated with an interface and an event'
-'tofix: rectangle size should be '
